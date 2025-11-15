@@ -11,42 +11,64 @@ concurrency:
   group: cd-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# NOTE: Keep only read perms by default. Students should enable what they need.
 permissions:
   contents: read
-
+  # pages: write     # TODO (Pages): needed when deploying GitHub Pages
+  # id-token: write  # TODO (Pages): needed by deploy-pages action
+  # packages: write  # TODO (Images): needed when pushing to a registry that requires it
 
 jobs:
   docker:
     name: Docker Skeleton
+    # Run after successful CI, or always when manually dispatched
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout CI commit (or current on manual run)
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Setup Buildx (required later)
+      - name: Setup Buildx (multi-arch builder)
         uses: docker/setup-buildx-action@v3
 
-      # ------------------ STUDENT TODOS ------------------
-      # TODO-1: Login to registry (Docker Hub or GHCR)
+      # ------------------------- STUDENT TODOs (Docker) -------------------------
+      # TODO: Add a login step to the chosen container registry (Docker Hub or GHCR).
+      # Expectation:
+      #  - Authenticates using appropriate credentials (repo secrets/vars or built-in token).
+      #  - Uses the correct registry hostname for the chosen provider.
+      # - name: TODO – login to container registry
+      #   run: echo "Authenticate to the target container registry."
 
+      # TODO: Add a step to build and push the container image from this repository.
+      # Expectation:
+      #  - Uses the repository root as build context.
+      #  - Pushes at least two tags: a stable tag (e.g., latest) and a content-addressable tag (e.g., by commit SHA).
+      #  - (Optional) Configures build cache to speed up subsequent builds.
+      # - name: TODO – build & push Docker image
+      #   run: echo "Build the image and push with stable + commit-specific tags."
 
-      # TODO-2: Build & push image
-
-
-      # TODO-3 (optional): Test container runs
-
+      # TODO (optional): Add a smoke test that runs the freshly built image and checks a health endpoint.
+      # Expectation:
+      #  - Starts a container from the just-pushed tag.
+      #  - Polls a health URL until success or timeout.
+      #  - Stops the container and fails the job on errors.
+      # - name: TODO – smoke test container
+      #   run: echo "Run the container and verify a health endpoint responds."
+      # -------------------------------------------------------------------------
 
       - name: Placeholder
-        run: echo "Docker CD TODOs go here (login, build, push, and test)."
-      # ---------------------------------------------------
+        run: echo "Docker CD TODOs go here (login, build+push, optional smoke test)."
 
   pages:
     name: Pages Skeleton
     needs: docker
     runs-on: ubuntu-latest
+    # environment:
+    #   name: github-pages
+    #   url: ${{ steps.deploy.outputs.page_url }}
 
     steps:
       - name: Checkout CI commit (or current on manual run)
@@ -63,14 +85,36 @@ jobs:
       - name: Setup Gradle (cache)
         uses: gradle/actions/setup-gradle@v4
 
-      # ------------------ STUDENT TODOS ------------------
-      # TODO-1: Run tests to produce JaCoCo XML
+      # ------------------------- STUDENT TODOs (Pages) -------------------------
+      # TODO: Add a step to run tests and produce the coverage report again in CD.
+      # (The Pages site will read the latest coverage value from the generated XML.)
+      # Expectation:
+      #  - The step runs the test suite and re-creates the coverage XML.
+      # - name: TODO – run tests & generate coverage
+      #   run: echo "Re-run tests and produce coverage reports."
 
+      # TODO: Add a step that generates the static files for the Pages site (docs/).
+      # Expectation:
+      #  - Produces at least a JSON data file and an index page under docs/.
+      #  - Includes a build identifier (e.g., current run number) in the output.
+      # - name: TODO – generate Pages content
+      #   run: echo "Generate build summary files into docs/."
 
-      # TODO-2: Generate minimal Pages files (docs/)
-
-
-      # TODO-3: Configure & deploy GitHub Pages
+      # TODO: Add the three standard steps to publish GitHub Pages:
+      #  1) configure Pages for this run,
+      #  2) upload the docs/ directory as the artifact to be published,
+      #  3) deploy the uploaded artifact to the Pages environment.
+      # Expectation:
+      #  - Grants required permissions at the top of the workflow (pages + id-token).
+      #  - Uploads exactly the docs/ directory.
+      #  - Exposes the deployed URL in the job summary.
+      # - name: TODO – configure Pages
+      #   run: echo "Prepare the repository for a Pages deployment."
+      # - name: TODO – upload Pages artifact
+      #   run: echo "Upload docs/ as the site artifact."
+      # - name: TODO – deploy to GitHub Pages
+      #   run: echo "Deploy the uploaded site artifact to Pages."
+      # -------------------------------------------------------------------------
 
 
       - name: Placeholder
