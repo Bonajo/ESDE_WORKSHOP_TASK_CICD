@@ -1,28 +1,30 @@
 name: CD (Docker & Pages)
 
 on:
+  # Run CD automatically after CI finishes on main
   workflow_run:
     workflows: ["CI (Build & Test)"]
     types: [completed]
     branches: [main]
+
+  # Allow manual runs from the Actions tab (useful in a workshop)
   workflow_dispatch:
 
 concurrency:
   group: cd-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-# NOTE: Keep permissions minimal by default.
-# ENABLE only once you actually need it.
+# Keep permissions minimal by default.
+# Students should uncomment what they need when they implement Docker & Pages.
 permissions:
   contents: read
-  # packages: write   # TODO (Docker): required to push images to GHCR
-  # pages: write      # TODO (Pages): required to deploy GitHub Pages
-  # id-token: write   # TODO (Pages): required by deploy-pages for OIDC
+  # packages: write   # TODO (Docker): needed if you push images to GHCR
+  # pages: write      # TODO (Pages): needed if you deploy GitHub Pages
+  # id-token: write   # TODO (Pages): needed by deploy-pages for OIDC
 
 jobs:
   docker:
-    name: Docker Skeleton
-    # Run after successful CI or when manually triggered
+    name: Docker (Build, Push & E2E) – Skeleton
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
@@ -34,61 +36,84 @@ jobs:
           # For manual runs, fall back to the current commit.
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Setup Buildx (multi-arch builder)
+      - name: Setup Docker Buildx (for advanced builds/multi-arch)
         uses: docker/setup-buildx-action@v3
 
-      # ------------------------- STUDENT TODOs (Docker & E2E) -------------------------
-      # TODO 1 – Log in to a container registry (e.g., GHCR or Docker Hub)
-      #
-      # Expectation:
-      # - Authenticate to the chosen registry so that subsequent pushes (and pulls for E2E)
-      #   are authorized.
-      # - For GHCR, use the built-in GITHUB_TOKEN with the correct registry hostname.
-      # - For Docker Hub, use username + token from repo variables/secrets.
-      #
-      # Example behaviour (students must implement themselves):
-      # - Use docker/login-action or an equivalent login command.
-      # - Use appropriate credentials: either GITHUB_TOKEN or Docker Hub PAT.
-      #
-      # - name: TODO – login to container registry
-      #   run: echo "Authenticate to the chosen registry (GHCR or Docker Hub)."
+      - name: Compute lowercase GHCR repo name
+        id: repo
+        run: |
+          # GITHUB_REPOSITORY can contain uppercase letters,
+          # but Docker image names in GHCR must be lowercase.
+          # Example: "FontysVenlo/Repo" -> "fontysvenlo/repo"
+          REPO_LC="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          echo "repo_lc=$REPO_LC" >> "$GITHUB_OUTPUT"
 
-      # TODO 2 – Build and push a Docker image for this repository
+      # ------------------------- STUDENT TODOs (Docker & E2E) -------------------------
+
+      # TODO 1 – Log in to a container registry (e.g., GHCR)
       #
-      # Expectation:
-      # - Use the repository root (.) as the build context.
-      # - Tag the image in the correct namespace:
-      #     - GHCR: ghcr.io/<owner>/<repo>:<tag>
-      #     - Docker Hub: <dockerhub-user>/workshop:<tag>
-      # - Push at least two tags:
-      #     - A stable tag (e.g., 'latest').
-      #     - A commit-specific tag (e.g., based on GITHUB_SHA).
-      # - Optionally use build cache to speed up future builds.
+      # Goal:
+      #   Allow this workflow to push images to a registry (and pull them again for tests).
       #
-      # - name: TODO – build & push Docker image
-      #   run: echo "Build the image and push it with stable + commit-specific tags."
+      # Expectations:
+      #   - Use a login mechanism suitable for CI (not manual 'docker login').
+      #   - For GHCR, authenticate as the GitHub Actions runner using the built-in GITHUB_TOKEN.
+      #   - Ensure this step runs before any push or E2E test that needs to pull the image.
+      #
+      # Hint:
+      #   - For GHCR, the registry hostname is "ghcr.io".
+      #   - The image name will later look like: ghcr.io/<lowercase owner>/<lowercase repo>:<tag>
+      #
+      - name: TODO – Login to container registry
+        run: echo "TODO: log in to the chosen registry (e.g., GHCR using GITHUB_TOKEN)."
+
+      # TODO 2 – Build and push a Docker image
+      #
+      # Goal:
+      #   Build the application image from this repository and push it to the registry.
+      #
+      # Expectations:
+      #   - Use the repository root (.) as the build context.
+      #   - Tag the image using the lowercase repo name from the previous step:
+      #       ghcr.io/${{ steps.repo.outputs.repo_lc }}:<tag>
+      #   - Push at least:
+      #       - a stable tag (e.g., "latest"),
+      #       - and a commit-specific tag (e.g., based on the current SHA).
+      #   - (Optional) Enable build cache to speed up subsequent builds.
+      #
+      - name: TODO – Build & push Docker image
+        run: |
+          echo "TODO: build the image from '.' and push tags like:"
+          echo "  ghcr.io/${{ steps.repo.outputs.repo_lc }}:latest"
+          echo "  ghcr.io/${{ steps.repo.outputs.repo_lc }}:<commit-hash>"
 
       # TODO 3 – End-to-end (E2E) container smoke test
       #
       # Goal:
-      # - Verify that the freshly built image actually runs and responds correctly.
+      #   Verify that the freshly built image actually runs and responds correctly,
+      #   similar to how a real user (or client) would use it.
       #
-      # Expectation:
-      # - Start a container from the just-pushed image.
-      # - Wait until the application is healthy (e.g., polling /api/health).
-      # - Call at least one "real" endpoint (e.g., /api/info) and fail the job if it
-      #   does not return a successful response.
-      # - Stop the container at the end (even on failure).
+      # Expectations:
+      #   - Start a container from the image you just pushed
+      #     (for example: ghcr.io/<lowercase repo>:latest).
+      #   - Wait until a health endpoint responds successfully (e.g., /api/health).
+      #   - Call another real endpoint (e.g., /api/info) and fail the job if it
+      #     does not return a successful HTTP response.
+      #   - Stop the container at the end, even if something goes wrong.
       #
-      # - name: TODO – run E2E smoke test against container
-      #   run: echo "Run the container from the new image and verify /api/health and /api/info."
-      # -----------------------------------------------------------------------
+      # Hints:
+      #   - Use a small loop to poll the health endpoint with a timeout.
+      #   - Print container logs when something fails to help with debugging.
+      #
+      - name: TODO – E2E smoke test against container
+        run: |
+          echo "TODO: run a container from ghcr.io/${{ steps.repo.outputs.repo_lc }}:latest,"
+          echo "      poll /api/health until it is OK, then call /api/info and stop the container."
 
-      - name: Placeholder
-        run: echo "Docker CD TODOs go here (login, build+push, E2E container test)."
+      # -------------------------------------------------------------------------------
 
   pages:
-    name: Pages Skeleton
+    name: GitHub Pages – Skeleton
     needs: docker
     runs-on: ubuntu-latest
     # environment:
@@ -107,49 +132,65 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Setup Gradle (cache)
+      - name: Setup Gradle (with caching)
         uses: gradle/actions/setup-gradle@v4
 
       # ------------------------- STUDENT TODOs (Pages) -------------------------
-      # TODO 4 – Re-run tests and generate coverage reports
-      #
-      # Expectation:
-      # - Run the test suite again in the CD context.
-      # - Generate the coverage XML that the Pages generator can read.
-      #
-      # - name: TODO – run tests & generate coverage
-      #   run: echo "Re-run tests and produce coverage report."
 
-      # TODO 5 – Generate static files for the GitHub Pages site
+      # TODO 4 – Re-run tests and generate coverage in CD
       #
-      # Expectation:
-      # - Execute the task/class that writes the docs/ directory (e.g., JSON + HTML).
-      # - Include information such as build version or run number in the output.
+      # Goal:
+      #   Ensure the CD pipeline also has a fresh view of test status and coverage,
+      #   and generate the coverage report that will be referenced by the Pages output.
       #
-      # - name: TODO – generate Pages content (docs/)
-      #   run: echo "Generate build summary files into docs/."
+      # Expectations:
+      #   - Run the project tests.
+      #   - Generate the coverage reports (XML + HTML) used elsewhere in the pipeline.
+      #
+      - name: TODO – Run tests & generate coverage
+        run: echo "TODO: run the test task(s) that also produce coverage reports."
+
+      # TODO 5 – Generate static content for GitHub Pages
+      #
+      # Goal:
+      #   Produce a small static site (in docs/) that summarises build information
+      #   (e.g., version, coverage, build number).
+      #
+      # Expectations:
+      #   - Execute the existing task/class that writes into the docs/ directory.
+      #   - Include some notion of build/run identifier (e.g., workflow run number).
+      #   - Ensure docs/ contains at least an index page and supporting data files.
+      #
+      - name: TODO – Generate Pages content (docs/)
+        run: echo "TODO: generate the docs/ folder with a simple build summary site."
 
       # TODO 6 – Configure and deploy GitHub Pages
       #
-      # Expectation:
-      # - Enable the necessary permissions at the top of the workflow (pages + id-token).
-      # - Use the official actions to:
-      #   1) configure Pages,
-      #   2) upload the docs/ directory as an artifact,
-      #   3) deploy that artifact to the Pages environment.
-      # - Expose the final Pages URL via the job summary (environment url).
+      # Goal:
+      #   Publish the docs/ directory as a GitHub Pages site whenever CD succeeds.
       #
-      # - name: TODO – configure GitHub Pages
-      #   run: echo "Call the action that prepares this repo for a Pages deployment."
+      # Expectations:
+      #   - At the top of the workflow, enable:
+      #       pages: write
+      #       id-token: write
+      #   - Use the official GitHub Actions to:
+      #       1) configure Pages for this repository,
+      #       2) upload docs/ as a Pages artifact,
+      #       3) deploy that artifact to the GitHub Pages environment.
+      #   - After a successful run, the Pages URL should appear in the workflow summary.
       #
-      # - name: TODO – upload Pages artifact
-      #   run: echo "Upload the docs/ folder as the site artifact."
+      # Hints:
+      #   - The upload step should point exactly at the docs/ directory.
+      #   - The deploy step typically depends on the uploaded artifact and exposes a URL.
       #
-      # - name: TODO – deploy to GitHub Pages
-      #   run: echo "Deploy the uploaded artifact to the GitHub Pages environment."
-      # --------------------------------------------------------------------------
+      - name: TODO – Configure & deploy GitHub Pages
+        run: |
+          echo "TODO: configure Pages, upload the docs/ artifact,"
+          echo "      and deploy it so the build summary becomes visible as a website."
 
-      - name: Placeholder
-        run: echo "Pages deployment TODOs go here (tests, exportPagesData, upload, deploy)."
-      # ---------------------------------------------------
+      # -----------------------------------------------------------------------
+
+      # TODO: students: Deploy GitHub Pages
+      - name: TODO – Deploy Pages
+        run: echo "TODO: pages deploy"
 
