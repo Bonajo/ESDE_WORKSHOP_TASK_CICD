@@ -3,10 +3,18 @@
 ## Requirements to Start working
 
 ### Pull Docker Image
+Step 1 - Pull the Container: <br>
+In the Repository root run: <br>
 docker pull ellimen/esd:starter
+<br>
+If you get the error "no matching manifest for linux/arm64/v8 in the manifest list entries" you have to force pull with linux.
+Run: <br>
+docker pull --platform=linux/amd64 ellimen/esd:latest
+Step 2 - Run the container: <br>
+In the Repository root run: <br>
 docker run --rm -p 8080:8080 -e APP_COMMIT=starter ellimen/esd:starter
-if error: no matching manifest for linux/arm64/v8 in the manifest list entries
-run: docker pull --platform=linux/amd64 ellimen/esd:latest
+Step 3 - Check that the container is healthy: <br>
+
 curl -fsS http://localhost:8080/api/health
 curl -fsS http://localhost:8080/api/info
 
