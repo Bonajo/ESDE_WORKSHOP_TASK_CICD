@@ -2,6 +2,13 @@
 
 ## Requirements to Start working
 
+### Pull Docker Image
+docker pull ellimen/esd:starter
+docker run --rm -p 8080:8080 -e APP_COMMIT=starter ellimen/esd:starter
+if error: no matching manifest for linux/arm64/v8 in the manifest list entries
+run: docker pull --platform=linux/amd64 ellimen/esd:latest
+
+
 ## Task 1
 
 <!-- Build & Deploy -->
