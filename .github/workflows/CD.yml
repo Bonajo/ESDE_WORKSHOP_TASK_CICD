@@ -13,7 +13,7 @@ concurrency:
 
 permissions:
   contents: read
- 
+
 
 jobs:
   docker:
