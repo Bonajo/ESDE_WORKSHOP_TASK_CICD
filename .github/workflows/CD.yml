@@ -65,7 +65,8 @@ jobs:
       #   - The image name will later look like: ghcr.io/<lowercase owner>/<lowercase repo>:<tag>
       #
       - name: TODO – Login to container registry
-        run: echo "TODO: log in to the chosen registry (e.g., GHCR using GITHUB_TOKEN)."
+        run: 
+        echo "TODO: log in to the chosen registry (e.g., GHCR using GITHUB_TOKEN)."
 
       # TODO 2 – Build and push a Docker image
       #
@@ -86,6 +87,7 @@ jobs:
           echo "TODO: build the image from '.' and push tags like:"
           echo "  ghcr.io/${{ steps.repo.outputs.repo_lc }}:latest"
           echo "  ghcr.io/${{ steps.repo.outputs.repo_lc }}:<commit-hash>"
+
 
       # TODO 3 – End-to-end (E2E) container smoke test
       #
@@ -148,7 +150,8 @@ jobs:
       #   - Generate the coverage reports (XML + HTML) used elsewhere in the pipeline.
       #
       - name: TODO – Run tests & generate coverage
-        run: echo "TODO: run the test task(s) that also produce coverage reports."
+        run: |
+          echo "TODO: run the test task(s) that also produce coverage reports."
 
       # TODO 5 – Generate static content for GitHub Pages
       #
@@ -161,8 +164,10 @@ jobs:
       #   - Include some notion of build/run identifier (e.g., workflow run number).
       #   - Ensure docs/ contains at least an index page and supporting data files.
       #
+      # TODO 5 – Generate static content for GitHub Pages
       - name: TODO – Generate Pages content (docs/)
-        run: echo "TODO: generate the docs/ folder with a simple build summary site."
+        run: |
+          echo "TODO: generate the docs/ folder with a simple build summary site."
 
       # TODO 6 – Configure and deploy GitHub Pages
       #
@@ -192,5 +197,5 @@ jobs:
 
       # TODO: students: Deploy GitHub Pages
       - name: TODO – Deploy Pages
-        run: echo "TODO: pages deploy"
-
+        run: |
+          echo "TODO: pages deploy"
