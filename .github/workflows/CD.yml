@@ -65,8 +65,9 @@ jobs:
       #   - The image name will later look like: ghcr.io/<lowercase owner>/<lowercase repo>:<tag>
       #
       - name: TODO – Login to container registry
-        run: 
-        echo "TODO: log in to the chosen registry (e.g., GHCR using GITHUB_TOKEN)."
+        run: |
+          echo "TODO: log in to the chosen registry (e.g., GHCR using GITHUB_TOKEN)."
+
 
       # TODO 2 – Build and push a Docker image
       #
