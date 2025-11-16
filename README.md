@@ -1,7 +1,5 @@
 # ESDE_WORKSHOP_TASK_CICD
 
-> Learn CI (build/test/coverage), Docker CD (build & push), and GitHub Pages (publish a tiny build page).
-
 ---
 
 ## 🔧 Prerequisites
