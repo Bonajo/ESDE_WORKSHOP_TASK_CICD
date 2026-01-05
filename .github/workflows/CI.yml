@@ -69,4 +69,3 @@ jobs:
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v4
         continue-on-error: false
-        run: echo "Build, run tests, upload a test report, and build the app artifact. (You can delete this after successfully implementing the TODOS)"
